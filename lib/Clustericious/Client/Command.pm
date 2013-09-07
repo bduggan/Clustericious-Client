@@ -20,34 +20,46 @@ Then
  fooclient version
  fooclient foobject 31
  fooclient foobject_search --color beige
+ fooclient --remote bar status
 
 =head1 DESCRIPTION
 
-This will try to take command line arguments and call the right client
-methods.
+Every method invocation of a Clustericious::Client object has
+an analogous comand line call.  For instance, calling
 
-Calling 'fooclient bar baz' is equivalent to Foo::Client->new()->bar("baz").
+     fooclient bar baz
 
-=head1 CAVEATS
+may be equivalent to
 
-There are currently a few heuristics used when one of the arguments
-is a filename (i.e. is it a yaml file that should be parsed and send
-as a hashref, or a filename that should be PUT?  Should STDIN be
-used?).  These need to be formalized and documented.
+     Foo::Client->new()->bar("baz")
 
-=head1 NOTES
+The specifics of how each command maps from a method invocation
+to a command line call (and to a RESTful call) are described in
+Clustericious::Client.  Some methods use positional arguments (as
+in the example above), others use named parameters, for instance,
+mapping
 
-This is a beta release, the API is subject to change without notice.
+    fooclient foo --name baz
 
-=head1 TODO
+to
 
-Document and stabilize the API.
+    $client->foo(name => 'baz')
+
+=head1 COMMON OPTIONS
+
+The option --remote foo will specify that the 'remote' sections of
+the config file should be used to load the configuration before processing
+the options.
+
+The options described in L<Log::Log4perl::CommandLine> may be used for
+any command line call.
 
 =cut
 
 use strict;
 use warnings;
 
+use feature qw/:all/;
 use File::Basename qw/basename/;
 use YAML::XS qw(Load Dump LoadFile);
 use Log::Log4perl qw/:easy/;
@@ -64,15 +76,40 @@ sub _usage {
     my $class = shift;
     my $client = shift;
     my $msg = shift;
+    my $command = shift;
+    my $name = basename($0);
+
+    if ($command) {
+        my $meta = Clustericious::Client::Meta::Route->new(
+            client_class => ref $client,
+            route_name => $command
+        );
+        say "";
+        if (my $doc = $meta->doc) {
+            say "$name $command $doc";
+        } elsif ($client->can($command)) {
+            say "$name $command";
+        } else {
+            say "Unknown command : $command";
+        }
+        if (my $description = $meta->get_pod_doc || $meta->get('description')) {
+            chomp $description;
+            say "\nDescription :\n    $description";
+        }
+        if (my $args = $meta->get('args')) {
+            say "Arguments :\n".$meta->route_args_string;
+        }
+        return;
+    }
+
     my $routes = Clustericious::Client::Meta->routes(ref $client);
     my $objects = Clustericious::Client::Meta->objects(ref $client);
-    print STDERR $msg,"\n" if $msg;
-    print STDERR "Usage:\n";
-    my $name = basename($0);
-    print STDERR <<EOPRINT if $routes && @$routes;
+    say $msg if $msg;
+    say "Usage:";
+    say <<EOPRINT if $routes && @$routes;
 @{[ join "\n", map "       $name [opts] $_->[0] $_->[1]", @$routes ]}
 EOPRINT
-    print STDERR <<EOPRINT if $objects && @$objects;
+    say <<EOPRINT if $objects && @$objects;
        $name [opts] <object>
        $name [opts] <object> <keys>
        $name [opts] search <object> [--key value]
@@ -80,14 +117,15 @@ EOPRINT
        $name [opts] update <object> <keys> [<filename>]
        $name [opts] delete <object> <keys>
 
-    where "opts" are as described in Log::Log4perl::CommandLine, or
-    may be "--remote <remote>" to specify a remote to use from the
-    config file (see Clustericious::Client).
-
-    and "<object>" may be one of the following :
+      <object> may be one of the following :
 @{[ join "\n", map "      $_->[0] $_->[1]", @$objects ]}
-
 EOPRINT
+
+    say <<DONE;
+    [opts] are described in Log::Log4perl::CommandLine and Clustericious::Client::Command.
+DONE
+
+    say "For help about a particular command, type $name help <command>.\n";
 
     exit 0;
 }
@@ -148,7 +186,15 @@ sub run {
     my @args = @_ ? @_ : @ARGV;
     our $TESTING;
 
-    return $class->_usage($client) if !$args[0] || $args[0] =~ /help/;
+    return $class->_usage($client,"") if !$args[0];
+    return $class->_usage($client,"") if @args==1 && $args[0] =~ /help$/;
+
+    if (@args==2 && $args[0] eq 'help') {
+        return $class->_usage($client,"Help for $args[1] :",$args[1]);
+    }
+    if (@args==2 && $args[1] eq '--help') {
+        return $class->_usage($client,"Help for $args[0] :",$args[0]);
+    }
 
     # Preprocessing for any common args, e.g. --remote
     my $arg;
@@ -165,7 +211,7 @@ sub run {
         }
     }
 
-    my $method = $arg or $class->_usage($client);
+    my $method = $arg or $class->_usage($client,"No such command : $arg");
 
     # Map some alternative command line forms.
     my $try_stdin;

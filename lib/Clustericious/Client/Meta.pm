@@ -15,7 +15,16 @@ our $VERSION = '0.83';
 our %Routes; # hash from class name to array ref of routes.
 our %RouteAttributes; # hash from class name to hash ref of attributes.
 our %Objects; # hash from class name to array ref of objects.
-our @CommonRoutes = ( [ "version" => '' ], [ "status" => '' ], [ "api" => '' ], [ "logtail" => '' ] );
+our @CommonRoutes = ( [ "version" => "" ],
+                      [ "status" => '' ],
+                      [ "api" => '' ],
+                      [ "logtail" => '' ] );
+our %DefaultAttributes = (
+    version => { description => "Send a GET request to /version." },
+    status  => { description => "Send a GET request to /status." },
+    api     => { description => "Send a GET request to /api." },
+    logtail => { description => "Send a GET request to /logtail." },
+);
 
 =head2 add_route
 
@@ -53,7 +62,7 @@ sub get_route_doc {
     my $class      = shift;
     my $for        = shift;         # e.g. Restmd::Client
     my $route_name = shift;         # same as $subname
-    my ($found) = grep { $_->[0] eq $route_name } @{ $Routes{$for} };
+    my ($found) = grep { $_->[0] eq $route_name } @{ $class->routes($for) };
     return $found->[1];
 }
 
@@ -82,6 +91,11 @@ sub add_route_attribute {
     my $route_name = shift;
     my $attr_name  = shift;
     my $attr_value = shift;
+
+    unless (grep { $_->[0] eq $route_name } @{ $class->routes($for) }) {
+        $class->add_route($for, $route_name);
+    }
+
     $RouteAttributes{$for}->{$route_name}{$attr_name} = $attr_value;
 }
 
@@ -96,7 +110,8 @@ sub get_route_attribute {
     my $for        = shift;         # e.g. Restmd::Client
     my $route_name = shift;
     my $attr_name  = shift;
-    return $RouteAttributes{$for}->{$route_name}{$attr_name};
+    return $RouteAttributes{$for}->{$route_name}{$attr_name}
+        || $DefaultAttributes{$route_name}{$attr_name};
 }
 
 =head2 add_object
@@ -131,7 +146,10 @@ documentation.
 sub routes {
     my $class = shift;
     my $for = shift;
-    return [ @CommonRoutes, @{$Routes{$for} || []}];
+    return [
+        @{$Routes{$for} || []},
+        @CommonRoutes,
+    ];
 }
 
 sub objects {

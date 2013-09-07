@@ -25,6 +25,7 @@ use Mojo::Base qw/-base/;
 use Data::Dumper;
 use Clustericious::Log;
 use Clustericious::Client::Meta;
+use Pod::POM;
 
 our $VERSION = '0.83';
 
@@ -159,10 +160,7 @@ sub process_args {
          .($_->{type} || '')
          } @$route_args;
 
-    my $doc = join "\n", "Valid options for '".$meta->route_name."' are :",
-      map {
-         sprintf('  --%-20s%-15s%s', $_->{name}, $_->{required} ? 'required' : '', $_->{doc} || "" )
-       } @$route_args;
+    my $doc = join "\n", "Valid options for '".$meta->route_name."' are :", $meta->route_args_string;
 
     my %method_args;
     Getopt::Long::Configure(qw/pass_through/); # TODO use OO interface
@@ -231,6 +229,49 @@ sub process_args {
     }
     return @method_args;
 }
+
+sub route_args_string {
+    my $self = shift;
+    my $args = $self->get('args') or return "";
+    my $str = "";
+    for my $arg (@$args) {
+        $str.= "   --$arg->{name}";
+        if ($arg->{required}) {
+            $str .= " (required)"
+        } else {
+            $str.= " (optional)"
+        }
+        for ($arg->{type} || 'bool') {
+            /^=s/ and do { $str .= " string"; next; };
+            /bool/ and do { $str .= " flag"; next; };
+            print $arg->{type};
+        }
+        $str .= ($arg->{doc} // '');
+        $str .= "\n";
+    }
+    return $str;
+
+}
+
+sub get_pod_doc {
+    my $self = shift;
+    my $client_class = $self->client_class;
+    $client_class =~ s[::][/]g;
+    $client_class .= '.pm';
+    my $parser = Pod::POM->new();
+    my $pom = $parser->parse_file($INC{$client_class}) or die "pod error : ".$parser->error;
+    my $pod_doc;
+    my $want = $self->route_name;
+    for my $head1 ($pom->head1) {
+        next unless $head1->title eq 'METHODS';
+        for my $head2 ($head1->head2()) {
+            next unless $head2->title =~ /\b$want\b/;
+            $pod_doc = $head2->content;
+        }
+    }
+    return $pod_doc;
+}
+
 
 =head1 SEE ALSO
 

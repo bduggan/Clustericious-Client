@@ -24,6 +24,7 @@ my $build = Module::Build->new(
           'DateTime::Format::DateParse'=> 0,
           'Data::Rmap'                 => 0,
           'Term::Prompt'               => 0,
+          'Pod::POM'                   => 0,
     },
     add_to_cleanup      => [ 'Clustericious-Client*' ],
     meta_merge => {
