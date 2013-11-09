@@ -1,8 +1,10 @@
 package Clustericious::Client::Object;
 
-=head1 NAME
+use strict;
+use warnings;
 
-Clustericious::Client::Object - default object returned from client methods
+# ABSTRACT: default object returned from client methods
+# VERSION
 
 =head1 SYNOPSIS
 
@@ -61,13 +63,6 @@ $obj->_client to get the original client if it was stored with new()
 (L<Clustericious::Client> does this).  This can be used by derived
 object methods to further interact with the REST server.
 
-=cut
-
-use strict; no strict 'refs';
-use warnings;
-
-our $VERSION = '0.83';
-
 =head1 METHODS
 
 =head2 C<new>
@@ -114,7 +109,7 @@ sub new
         return $self;
     }
 
-    while (my ($attr, $type) = each %{"${class}::classes"})
+    while (my ($attr, $type) = do { no strict 'refs'; each %{"${class}::classes"} })
     {
         eval "require $type";
 
@@ -163,7 +158,7 @@ sub AUTOLOAD
 
     my ($class, $called) = our $AUTOLOAD =~ /^(.+)::([^:]+)$/;
 
-    *{ "${class}::$called" } = sub
+    my $sub = sub
     {
         my $self = shift;
         my ($value) = @_;
@@ -182,6 +177,8 @@ sub AUTOLOAD
              : wantarray && (ref $value) ? %$value
              : $value;
     };
+
+    do { no strict 'refs'; *{ "${class}::$called" } = $sub };
 
     $self->$called(@_);
 }
@@ -205,3 +202,5 @@ These are also interesting:
 
  Mojo::Base
  Clustericious::Config
+
+=cut

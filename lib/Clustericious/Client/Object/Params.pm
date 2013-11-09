@@ -1,8 +1,11 @@
 package Clustericious::Client::Object::Params;
 
-=head1 NAME
+use strict;
+use warnings;
+use base 'Clustericious::Client::Object';
 
-Clustericious::Client::Object::Params - object parameters
+# ABSTRACT: object parameters
+# VERSION
 
 =head1 SYNOPSIS
 
@@ -22,13 +25,6 @@ Clustericious::Client::Object::Params - object parameters
 Takes an array reference of hashes with 'name' and 'value' keys and
 transforms it into a single flattened hash of name => value.
 
-=cut
-
-use strict;
-use warnings;
-
-use base 'Clustericious::Client::Object';
-
 =head1 METHODS
 
 =head2 C<new>
@@ -36,8 +32,6 @@ use base 'Clustericious::Client::Object';
  my $obj = Clustericious::Client::Object::Params->new($data);
 
 =cut
-
-our $VERSION = '0.83';
 
 sub new
 {

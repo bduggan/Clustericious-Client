@@ -3,11 +3,8 @@ package Clustericious::Client;
 use strict; no strict 'refs';
 use warnings;
 
-our $VERSION = '0.83';
-
-=head1 NAME
-
-Clustericious::Client - Construct command line and perl clients for RESTful services.
+# ABSTRACT: Construct command line and perl clients for RESTful services.
+# VERSION
 
 =head1 SYNOPSIS
 
@@ -78,6 +75,8 @@ From the command line :
     $ tracks_cli mixes --api_key foo --tags jazz
 
 =head1 DESCRIPTION
+
+This is a beta release.  The API is subject to changes without notice.
 
 Clustericious::Client is library for construction clients for RESTful
 services.  It provides a mapping between command line arguments, method
@@ -180,8 +179,9 @@ sub new
     {
         my $app = $self->{app};
         $app = $app->new() unless ref($app);
-        my $client = Mojo::UserAgent->new(app => $app)
-            or return undef;
+        my $client = Mojo::UserAgent->new;
+        return undef unless $client;
+        eval { $client->server->app($app) } // $client->app($app);
 
         $self->client($client);
     }
@@ -402,7 +402,7 @@ sub route_meta {
 
 Set arguments for this route.  This allows command line options
 to be transformed into method arguments, and allows normalization
-and validation of method arguements.  route_args associates an array
+and validation of method arguments.  route_args associates an array
 ref with the name of a route.  Each entry in the array ref is a hashref
 which may have keys as shown in this example :
 
@@ -447,11 +447,11 @@ If this arg is required, set this to 1.
 
 =item doc
 
-A brief description to be printed in error messages and help documenation.
+A brief description to be printed in error messages and help documentation.
 
 =item preprocess
 
-Can be either 'yamldoc', 'list' or 'datetime'.
+Can be either C<yamldoc>, C<list> or C<datetime>.
 
 For yamldoc and list, the argument is expected
 to refer to either a filename which exists, or else "-" for STDIN.  The contents
@@ -470,7 +470,7 @@ Describes how the URL is affected by the arguments.  Can be
     route subname '/url'
     route_args subname => [ { name => 'foo', type => "=s", modifies_url => 'query' } ]
 
-This wlll cause this invocation :
+This will cause this invocation :
 
     $foo->subname( "foo" => "bar" )
 
@@ -500,7 +500,7 @@ Describes how the parameter modifies the payload.
 
 Can be 'one' or 'many'.
 
-If set, this is a positional param, not a named param.  i.e.
+If set, this is a positional parameter, not a named parameter.  i.e.
 getopt will not be used to parse the command line, and
 it will be take from a list sent to the method.  For instance
 
@@ -1023,18 +1023,6 @@ sub logtail {
 =head1 SEE ALSO
 
 L<Clustericious::Config>, L<Clustericious>, L<Mojolicious>
-
-=head1 AUTHORS
-
-Brian Duggan
-
-Graham Ollis
-
-Curt Tilmes
-
-=head1 NOTES
-
-This is a beta release.  The API is subject to changes without notice.
 
 =cut
 

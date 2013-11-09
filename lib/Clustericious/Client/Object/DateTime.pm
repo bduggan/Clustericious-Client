@@ -1,8 +1,10 @@
 package Clustericious::Client::Object::DateTime;
 
-=head1 NAME
+use strict;
+use warnings;
 
-Clustericious::Client::Object::DateTime - Clustericious DateTime object
+# ABSTRACT: Clustericious DateTime object
+# VERSION
 
 =head1 SYNOPSIS
 
@@ -19,12 +21,7 @@ to.
 
 =cut
 
-use strict;
-use warnings;
-
 use DateTime::Format::ISO8601;
-
-our $VERSION = '0.83';
 
 =head1 METHODS
 

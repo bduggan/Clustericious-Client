@@ -1,6 +1,17 @@
-=head1 NAME
+package Clustericious::Client::Meta::Route;
 
-Clustericious::Client::Meta::Route - metadata about a route
+use strict;
+use warnings;
+use YAML::XS qw/LoadFile/;
+use DateTime::Format::DateParse;
+use Getopt::Long qw/GetOptionsFromArray/;
+use Mojo::Base qw/-base/;
+use Data::Dumper;
+use Clustericious::Log;
+use Clustericious::Client::Meta;
+
+# ABSTRACT: metadata about a route'
+# VERSION
 
 =head1 DESCRIPTION
 
@@ -17,17 +28,6 @@ documentation and attributes.
 
 =cut
 
-package Clustericious::Client::Meta::Route;
-use YAML::XS qw/LoadFile/;
-use DateTime::Format::DateParse;
-use Getopt::Long qw/GetOptionsFromArray/;
-use Mojo::Base qw/-base/;
-use Data::Dumper;
-use Clustericious::Log;
-use Clustericious::Client::Meta;
-use Pod::POM;
-
-our $VERSION = '0.83';
 
 has 'client_class';
 has 'route_name';

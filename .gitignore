@@ -1,7 +1,2 @@
-/Build
-/Build.bat
-/_build
-/blib
-/MYMETA.yml
-/MYMETA.json
 /Clustericious-Client-*
+/.build

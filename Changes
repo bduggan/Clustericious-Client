@@ -1,4 +1,16 @@
-Revision history for Clustericious-Client
+Revision history for {{$dist->name}}
+
+{{$NEXT}}
+
+0.85      2013-11-05 10:43:41 America/New_York
+  - more diagnostics for automated testing
+
+0.84      2013-11-02 19:04:47 America/New_York
+  - promote to production
+
+0.83_01   2013-10-31 08:28:28 America/New_York
+  - migrate to Dist::Zilla
+  - Mojolicious 4.50 compatability (remove warning only)
 
 0.83    Sat Aug 31 14:29:08 EDT 2013
   - Update prereqs
