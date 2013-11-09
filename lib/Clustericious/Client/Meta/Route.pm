@@ -230,6 +230,12 @@ sub process_args {
     return @method_args;
 }
 
+=head2 route_args_string
+
+Construct documentation based on the arguments for a particular method.
+
+=cut
+
 sub route_args_string {
     my $self = shift;
     my $args = $self->get('args') or return "";
@@ -252,6 +258,13 @@ sub route_args_string {
     return $str;
 
 }
+
+=head2 get_pod_doc
+
+Extract a snippet of documentation from the METHODS section of the pod,
+which describes the invocation of a particular method.
+
+=cut
 
 sub get_pod_doc {
     my $self = shift;
